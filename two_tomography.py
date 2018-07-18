@@ -4,7 +4,7 @@ from numpy import kron as kron
 import pprint
 
 class density_matrix:
-    initial = 0.2 * 1 / np.sqrt(2) * np.array(((1, 0, 0, 1))) + 0.8 * 1 /np.sqrt(2) * np.array(((0, 1, 1, 0)))
+    initial = 0.1 * 1 / np.sqrt(2) * np.array((1, 0, 0, 1)) + 0.1 * 1 /np.sqrt(2) * np.array((0, 1, 1, 0)) + 0.8 * 1/np.sqrt(2) * np.array((0, 1, 0, 1))
     I = np.array(((1, 0), (0, 1)))
     x = np.array(((0, 1), (1, 0)))
     y = np.array(((0, -1j), (1j, 0)))
@@ -31,7 +31,7 @@ class density_matrix:
         mxnxn = kron(mxn, mxn)#, 0)
 
         mxpyp = kron(mxp, myp)#, 0)
-        mxpyn = kron(mxp, myp)#, 0)
+        mxpyn = kron(mxp, myn)#, 0)
         mxnyp = kron(mxn, myp)#, 0)
         mxnyn = kron(mxn, myn)#, 0)
 
@@ -42,7 +42,7 @@ class density_matrix:
 #===============================
         mypxp = kron(myp, mxp)#, 0)
         mypxn = kron(myp, mxn)#, 0)
-        mynxp = kron(myn, mxn)#, 0)
+        mynxp = kron(myn, mxp)#, 0)
         mynxn = kron(myn, mxn)#, 0)
 
         mypyp = kron(myp, myp)#, 0)
@@ -74,17 +74,10 @@ class density_matrix:
                              mypxp, mypxn, mynxp, mynxn, mypyp, mypyn, mynyp, mynyn, mypzp, mypzn, mynzp, mynzn,
                              mzpxp, mzpxn, mznxp, mznxn, mzpyp, mzpyn, mznyp, mznyn, mzpzp, mzpzn, mznzp, mznzn]
 
-        print(len(measurement_basis))
-        #pprint.pprint(measurement_basis)
-        #print(con_initial)
         probability = []
         for measure in measurement_basis:
-            print(con(measure))
-            print(measure)
-            prob = np.dot(np.dot(con_initial, con(measure)), np.dot(measure, initial))
-            print(prob)
+            prob = np.vdot(np.dot(con_initial, con(measure)), np.dot(measure, initial))
             probability.append(prob)
-        print(probability)
 
         Stokes_parameters = []
         # S00 = probability[measurement_basis.index(mxpxp)] + probability[measurement_basis.index(mxpxn)] + probability[measurement_basis.index(mxnxp)] + probability[measurement_basis.index(mxnxn)]
@@ -94,15 +87,18 @@ class density_matrix:
 
         S00 = probability[0] + probability[1] + probability[2] + probability[3]
         S01 = probability[0] - probability[1] + probability[2] - probability[3]
-        S02 = probability[12] - probability[13] + probability[13] - probability[14]
-        S03 = probability[24] - probability[25] + probability[26] - probability[27]
+        S02 = probability[16] - probability[17] + probability[18] - probability[19]
+        S03 = probability[32] - probability[33] + probability[34] - probability[35]
+        S10 = probability[0] + probability[1] - probability[2] - probability[3]
+        S20 = probability[16] + probability[17] - probability[18] - probability[19]
+        S30 = probability[32] + probability[33] - probability[34] - probability[35]
 
-        Stokes_parameters = [S00, S01, S02, S03]
-        print(S00)
-        print(S01)
-        print(S02)
-        print(S03)
-        print(Stokes_parameters)
+        Stokes_parameters = [S00, S01, S02, S03, S10, S20, S30]
+        #print(S00)
+        #print(S01)
+        #print(S02)
+        #print(S03)
+        #print(Stokes_parameters)
 
         #XX, YY, ZZ
         for j in range(0, len(measurement_basis) - 3, 4):
@@ -110,42 +106,29 @@ class density_matrix:
             Stokes_parameters.append(S)
         print(Stokes_parameters)
 
-        # print(kron(y, y))
-        #
-        # print(Stokes_parameters[0] * kron(I, I))
-        # print(Stokes_parameters[1] * kron(I, x))
-        # print(Stokes_parameters[2] * kron(I, y))
-        # print(Stokes_parameters[3] * kron(I, z))
-        # print(Stokes_parameters[4] * kron(x, x))
-        # print(Stokes_parameters[5] * kron(x, y))
-        # print(Stokes_parameters[6] * kron(x, z))
-        # print(Stokes_parameters[7] * kron(y, x))
-        # print(Stokes_parameters[8] * kron(y, y))
-        # print(Stokes_parameters[9] * kron(y, z))
-        # print(Stokes_parameters[10] * kron(z, x))
-        # print(Stokes_parameters[11] * kron(z, y))
-        # print(Stokes_parameters[12] * kron(z, z))
-        print(len(Stokes_parameters))
-
         rho = 1/4*(Stokes_parameters[0] * kron(I, I)
                    + Stokes_parameters[1] * kron(I, x)
                    + Stokes_parameters[2] * kron(I, y)
                    + Stokes_parameters[3] * kron(I, z)
-                   + Stokes_parameters[4] * kron(x, x)
-                   + Stokes_parameters[5] * kron(x, y)
-                   + Stokes_parameters[6] * kron(x, z)
-                   + Stokes_parameters[7] * kron(y, x)
-                   + Stokes_parameters[8] * kron(y, y)
-                   + Stokes_parameters[9] * kron(y, z)
-                   + Stokes_parameters[10] * kron(z, x)
-                   + Stokes_parameters[11] * kron(z, y)
-                   + Stokes_parameters[12] * kron(z, z))
+                   + Stokes_parameters[4] * kron(x, I)
+                   + Stokes_parameters[5] * kron(y, I)
+                   + Stokes_parameters[6] * kron(z, I)
+                   + Stokes_parameters[7] * kron(x, x)
+                   + Stokes_parameters[8] * kron(x, y)
+                   + Stokes_parameters[9] * kron(x, z)
+                   + Stokes_parameters[10] * kron(y, x)
+                   + Stokes_parameters[11] * kron(y, y)
+                   + Stokes_parameters[12] * kron(y, z)
+                   + Stokes_parameters[13] * kron(z, x)
+                   + Stokes_parameters[14] * kron(z, y)
+                   + Stokes_parameters[15] * kron(z, z))
 
 
 
-        t_rho = kron(initial, con_initial)
-        #print(Stokes_parameters)
-        print(rho)
+        t_rho = kron(initial, con_initial).reshape(4, 4)
+        print("========== measure density matrix ==========")
+        pprint.pprint(rho)
+        print("========== true density matrix ==========")
         pprint.pprint(t_rho)
 
 
