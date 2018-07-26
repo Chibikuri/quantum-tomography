@@ -1,0 +1,5 @@
+numpy
+pprint
+matplotlib
+random
+time
