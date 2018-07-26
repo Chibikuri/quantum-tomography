@@ -1,6 +1,7 @@
 from numpy import conjugate as con
 from numpy import kron
 import numpy as np
+import sys
 import pprint
 import basis
 # import pandas as pd
@@ -79,7 +80,7 @@ class density_matrix:
 
             Stokes_parameters.insert(4, S10)
             Stokes_parameters.insert(8, S20)
-            Stokes_parameters.insert(12, S30)  # FIXME can more efficient
+            Stokes_parameters.insert(12, S30)  # TODO can more efficient
             # finished calculattion of Stokes_parameters
 
             # stat = [str(k) + str(c) for k in state for c in state]
@@ -144,16 +145,22 @@ class density_matrix:
 
     @classmethod
     def iterate_sim(self, iter):
+        count = []
+        f_count = []
         errors = []
-        for k in range(iter):
+        for k in range(1, iter):
             print("now", k)
             err, rho, t_rho = self.evaluation_density(k)
-            errors.append(err)
+            errors.append(np.log10(err))
+            count.append(k)
+            f_count.append(1/np.log10(k))
         print("==============tomography_matrix==============")
         pprint.pprint(rho)
         print("=============true density matrix=============")
         pprint.pprint(t_rho)
-        plt.plot(errors)
+        plt.ylabel('Error rate(log10)')
+        plt.xlabel('Number of tomography')
+        plt.scatter(count, errors, s=0.5)
         plt.show()
 
     @classmethod
@@ -247,7 +254,7 @@ class density_matrix:
 
 if __name__ == '__main__':
     start = time.time()
-    density_matrix.iterate_sim(1000)
+    density_matrix.iterate_sim(int(sys.argv[1]))
     # difine how many times iterate in the method iterate_sim(iteration number)
     print(time.time() - start)
     # density_matrix.two_tomography()
