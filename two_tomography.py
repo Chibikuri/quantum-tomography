@@ -8,6 +8,8 @@ import basis
 import matplotlib.pyplot as plt
 import random
 import time
+# from numba.decorators import jit
+from scipy import linalg as lin
 
 
 class density_matrix:
@@ -15,7 +17,7 @@ class density_matrix:
             1/np.sqrt(2)*np.array((1, 0, 0, -1)),
             1/np.sqrt(2)*np.array((0, 1, 1, 0)),
             1/np.sqrt(2)*np.array((0, 1, -1, 0))]
-    initial = {"phy_plus": [0, 0.99], "phy_minus": [1, 0.01],
+    initial = {"phy_plus": [0, 0.6], "phy_minus": [1, 0.4],
                "psi_plus": [2, 0], "psi_minus": [3, 0]}
     # latter one in [0, 1](1 is latter one) is the rate of the state.
     I = np.array(((1, 0), (0, 1)))
@@ -43,13 +45,13 @@ class density_matrix:
                     prob = np.vdot(np.dot(con(bell[i[0]]), con(measure)),
                                    np.dot(measure, bell[i[0]]))
                     # con is the conjugate operation
-                    probability.append(prob * i[0])
+                    probability.append(prob * i[1])
             probability = np.array(probability).reshape(6, 6)
             # print(probability)
 
             # calculate stokes parameters
-            S00 = probability[0][0] + probability[0][1]
-            + probability[1][0] + probability[1][1]
+            S00 = (probability[0][0] + probability[0][1] +
+                  probability[1][0] + probability[1][1])
             Stokes_parameters.append(S00)
 
             for c in range(0, 5, 2):
@@ -93,6 +95,7 @@ class density_matrix:
             # print(rho)
 
             mk_rho = mk_rho + rho
+            # print(Stokes_parameters)
 
         for t in initial.values():
             t_rho = t_rho + t[1] * kron(bell[t[0]], con(bell[t[0]]))
@@ -104,10 +107,12 @@ class density_matrix:
         # pprint.pprint(mk_rho)
         # print("============ true density matrix ===========")
         # pprint.pprint(t_rho.reshape(4, 4))
+        self.fidelity(t_rho, mk_rho)
         return mk_rho, t_rho, probability
 
     @classmethod
     def return_table(self, probability):
+        pass
         # initial = self.initial
         # measurement_basis = basis.table_mb
 
@@ -144,13 +149,17 @@ class density_matrix:
         return error, rho, t_rho
 
     @classmethod
-    def iterate_sim(self, iter):
+    def iterate_sim(self, iter, interbal):
         count = []
         f_count = []
         errors = []
-        for k in range(1, iter):
+        fid = []
+        for k in range(1, iter, interbal):
             print("now", k)
             err, rho, t_rho = self.evaluation_density(k)
+            # tr = kron(1/np.sqrt(2)*np.array((1, 0, 0, 1)), con(1/np.sqrt(2)*np.array((1, 0, 0, 1))))
+            fidelity = self.fidelity(t_rho, rho)
+            fid.append(fidelity)
             errors.append(np.log10(err))
             count.append(k)
             f_count.append(1/np.log10(k))
@@ -158,11 +167,18 @@ class density_matrix:
         pprint.pprint(rho)
         print("=============true density matrix=============")
         pprint.pprint(t_rho)
+        fig = plt.figure(1)
         plt.ylabel('Error rate(log10)')
         plt.xlabel('Number of tomography')
         plt.scatter(count, errors, s=0.5)
         plt.show()
+        fig = plt.figure(2)
+        plt.ylabel('fidelity')
+        plt.xlabel('iteration(×' + str(interbal) + ')')
+        plt.plot(fid)
+        plt.show()
 
+    # @jit
     @classmethod
     def tomograph_density(self, iter):
         state_list = self.state_list
@@ -192,9 +208,12 @@ class density_matrix:
             sum = 0
             tomography.reshape(6, 6)
             for n in range(iter):
-                ran = random.randint(0, 5)
-                ran2 = random.randint(0, 5)
-                tomography[ran][ran2] = tomography[ran][ran2] + 1
+                ran = random.randint(0, 1)
+                ran2 = random.randint(0, 1)
+                for nc in range(0, 5, 2):
+                    for nl in range(0, 5, 2):
+                        tomography[nc + ran][nl + ran2] = tomography[nc + ran][nl + ran2] + 1
+                        # pprint.pprint(tomography)
 
             for measure in measurement_basis:
                     prob = np.vdot(np.dot(con(bell[j[0]]), con(measure)),
@@ -252,9 +271,20 @@ class density_matrix:
 
         return to_rho
 
+    def fidelity(t_rho, rho):
+        t_rho = t_rho.reshape(4, 4)
+        rho = rho.reshape(4, 4)
+        # print(t_rho)
+        # print(rho)
+        fidelity = np.square(np.trace(lin.sqrtm(np.dot(np.dot(lin.sqrtm(rho), t_rho),lin.sqrtm(rho)))))
+        print("=================fidelity==================")
+        print(fidelity)
+        return fidelity
+
 if __name__ == '__main__':
     start = time.time()
-    density_matrix.iterate_sim(int(sys.argv[1]))
+    density_matrix.iterate_sim(int(sys.argv[1]), int(sys.argv[2]))
+    # arg[1] is how many times you repeat arg[2] is interbal
     # difine how many times iterate in the method iterate_sim(iteration number)
     print(time.time() - start)
     # density_matrix.two_tomography()
