@@ -51,7 +51,7 @@ class density_matrix:
 
             # calculate stokes parameters
             S00 = (probability[0][0] + probability[0][1] +
-                  probability[1][0] + probability[1][1])
+                   probability[1][0] + probability[1][1])
             Stokes_parameters.append(S00)
 
             for c in range(0, 5, 2):
@@ -157,7 +157,8 @@ class density_matrix:
         for k in range(1, iter, interbal):
             print("now", k)
             err, rho, t_rho = self.evaluation_density(k)
-            # tr = kron(1/np.sqrt(2)*np.array((1, 0, 0, 1)), con(1/np.sqrt(2)*np.array((1, 0, 0, 1))))
+            # tr = kron(1/np.sqrt(2)*np.array((1, 0, 0, 1)),
+            # con(1/np.sqrt(2)*np.array((1, 0, 0, 1))))
             fidelity = self.fidelity(t_rho, rho)
             fid.append(fidelity)
             errors.append(np.log10(err))
@@ -212,7 +213,8 @@ class density_matrix:
                 ran2 = random.randint(0, 1)
                 for nc in range(0, 5, 2):
                     for nl in range(0, 5, 2):
-                        tomography[nc + ran][nl + ran2] = tomography[nc + ran][nl + ran2] + 1
+                        tomography[nc + ran][nl + ran2] = \
+                         tomography[nc + ran][nl + ran2] + 1
                         # pprint.pprint(tomography)
 
             for measure in measurement_basis:
@@ -276,7 +278,8 @@ class density_matrix:
         rho = rho.reshape(4, 4)
         # print(t_rho)
         # print(rho)
-        fidelity = np.square(np.trace(lin.sqrtm(np.dot(np.dot(lin.sqrtm(rho), t_rho),lin.sqrtm(rho)))))
+        fidelity = (np.square(np.trace(lin.sqrtm(np.dot(np.dot(
+            lin.sqrtm(rho), t_rho), lin.sqrtm(rho))))))
         print("=================fidelity==================")
         print(fidelity)
         return fidelity
